@@ -20,6 +20,8 @@ def get_user(db: Session, user_id: int) -> Optional[models.User]:
 
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     """Получает пользователя по email"""
+    if email is None:
+        return None
     return db.query(models.User).filter(models.User.email == email).first()
 
 def get_user_by_username(db: Session, username: str) -> Optional[models.User]:
