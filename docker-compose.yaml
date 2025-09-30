@@ -10,11 +10,15 @@ services:
       - ./app:/app/app  # optional: live code reload if you mount
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/californiagold
 
   minio:
     image: minio/minio:latest
@@ -29,5 +33,23 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ":9001"
 
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=californiagold
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d californiagold"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   minio_data:
+  postgres_data:
